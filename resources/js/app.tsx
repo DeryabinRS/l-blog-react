@@ -4,8 +4,9 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
+import '@ant-design/v5-patch-for-react-19';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'DRSCript';
 
 createInertiaApp({
     title: (title) => title ? `${title} - ${appName}` : appName,

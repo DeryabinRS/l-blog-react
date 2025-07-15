@@ -6,11 +6,11 @@ import { FormEventHandler } from 'react';
 import DeleteUser from '@/components/delete-user';
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input, Button } from 'antd';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import UploadImageFile from '@/components/upload-image-file';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -20,7 +20,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 type ProfileForm = {
-    name: string;
+    first_name: string;
+    last_name: string;
+    middle_name: string;
     email: string;
 };
 
@@ -28,7 +30,9 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
     const { auth } = usePage<SharedData>().props;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
-        name: auth.user.name,
+        first_name: auth.user.first_name,
+        last_name: auth.user.last_name,
+        middle_name: auth.user.middle_name,
         email: auth.user.email,
     });
 
@@ -42,27 +46,66 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Profile settings" />
+            <Head title="Настройки профиля" />
 
             <SettingsLayout>
                 <div className="space-y-6">
-                    <HeadingSmall title="Profile information" description="Update your name and email address" />
-
+                    <HeadingSmall title="Информация профиля" description="Измените данные профиля" />
+                    <div className="mb-4">
+                        <UploadImageFile
+                            defaultImage={auth.user.avatar}
+                            route={route('profile.avatar.upload')}
+                            onSuccess={(newAvatarUrl) => {
+                                // обновить аватар в состоянии или refetch user
+                                console.log(newAvatarUrl);
+                            }}
+                        />
+                    </div>
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Name</Label>
+                            <Label htmlFor="last_name">Фамилия</Label>
 
                             <Input
-                                id="name"
+                                id="last_name"
                                 className="mt-1 block w-full"
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
+                                value={data.last_name}
+                                onChange={(e) => setData('last_name', e.target.value)}
                                 required
-                                autoComplete="name"
-                                placeholder="Full name"
+                                autoComplete="last_name"
+                                placeholder="Last name"
                             />
 
-                            <InputError className="mt-2" message={errors.name} />
+                            <InputError className="mt-2" message={errors.last_name} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="first_name">Имя</Label>
+
+                            <Input
+                                id="first_name"
+                                className="mt-1 block w-full"
+                                value={data.first_name}
+                                onChange={(e) => setData('first_name', e.target.value)}
+                                required
+                                autoComplete="first_name"
+                                placeholder="First name"
+                            />
+
+                            <InputError className="mt-2" message={errors.first_name} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="middle_name">Отчество</Label>
+
+                            <Input
+                                id="middle_name"
+                                className="mt-1 block w-full"
+                                value={data.middle_name}
+                                onChange={(e) => setData('middle_name', e.target.value)}
+                                required
+                                autoComplete="middle_name"
+                                placeholder="Middle name"
+                            />
+
+                            <InputError className="mt-2" message={errors.middle_name} />
                         </div>
 
                         <div className="grid gap-2">
@@ -105,7 +148,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                         )}
 
                         <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Save</Button>
+                            <Button htmlType="submit" type="primary" disabled={processing}>Сохранить</Button>
 
                             <Transition
                                 show={recentlySuccessful}

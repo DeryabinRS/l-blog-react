@@ -7,8 +7,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input, Button, InputRef } from 'antd';
 import { Label } from '@/components/ui/label';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -19,8 +18,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Password() {
-    const passwordInput = useRef<HTMLInputElement>(null);
-    const currentPasswordInput = useRef<HTMLInputElement>(null);
+    const passwordInput = useRef<InputRef>(null);
+    const currentPasswordInput = useRef<InputRef>(null);
 
     const { data, setData, errors, put, reset, processing, recentlySuccessful } = useForm({
         current_password: '',
@@ -108,7 +107,7 @@ export default function Password() {
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Save password</Button>
+                            <Button disabled={processing} htmlType="submit" type="primary">Save password</Button>
 
                             <Transition
                                 show={recentlySuccessful}
