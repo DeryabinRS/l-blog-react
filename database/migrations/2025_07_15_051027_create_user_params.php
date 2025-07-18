@@ -13,15 +13,14 @@ return new class extends Migration
     {
         Schema::create('user_params', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->string('first_name');
-            $table->string('last_name');
-            $table->string('middle_name');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
+            $table->string('middle_name')->nullable();
             $table->string('avatar')->nullable();
             $table->integer('age')->nullable();
             $table->integer('gender')->nullable();
             $table->string('phone')->nullable();
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

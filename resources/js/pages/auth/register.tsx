@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 
 type RegisterForm = {
+    first_name: string;
+    last_name: string;
     email: string;
     password: string;
     password_confirmation: string;
@@ -15,6 +17,8 @@ type RegisterForm = {
 
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm<Required<RegisterForm>>({
+        first_name: '',
+        last_name: '',
         email: '',
         password: '',
         password_confirmation: '',
@@ -32,6 +36,38 @@ export default function Register() {
             <Head title="Register" />
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
+                    <div className="grid gap-2">
+                        <Label htmlFor="first_name">Имя</Label>
+                        <Input
+                            id="first_name"
+                            type="text"
+                            required
+                            tabIndex={2}
+                            autoComplete="first_name"
+                            value={data.first_name}
+                            onChange={(e) => setData('first_name', e.target.value)}
+                            disabled={processing}
+                            placeholder="Иван"
+                        />
+                        <InputError message={errors.first_name} />
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="last_name">Фамилия</Label>
+                        <Input
+                            id="last_name"
+                            type="text"
+                            required
+                            tabIndex={2}
+                            autoComplete="last_name"
+                            value={data.last_name}
+                            onChange={(e) => setData('last_name', e.target.value)}
+                            disabled={processing}
+                            placeholder="Иванов"
+                        />
+                        <InputError message={errors.last_name} />
+                    </div>
+
                     <div className="grid gap-2">
                         <Label htmlFor="email">Email address</Label>
                         <Input

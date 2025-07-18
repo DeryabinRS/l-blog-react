@@ -3,6 +3,7 @@ import type { Config } from 'ziggy-js';
 
 export interface Auth {
     user: User;
+    params: UserParams;
 }
 
 export interface BreadcrumbItem {
@@ -28,6 +29,7 @@ export interface SharedData {
     middle_name: string;
     quote: { message: string; author: string };
     auth: Auth;
+    params?: UserParams;
     ziggy: Config & { location: string };
     sidebarOpen: boolean;
     [key: string]: unknown;
@@ -39,9 +41,20 @@ export interface User {
     last_name: string;
     middle_name: string;
     email: string;
-    avatar?: string;
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface UserParams {
+    first_name?: string;
+    last_name?: string;
+    middle_name?: string;
+    full_name?: string;
+    avatar?: string;
+    url_avatar?: string; // Добавляем опциональное поле
+    age?: number;
+    gender?: number;
+    phone?: string;
 }

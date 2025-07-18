@@ -20,9 +20,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 type ProfileForm = {
-    first_name: string;
-    last_name: string;
-    middle_name: string;
+    first_name?: string;
+    last_name?: string;
+    middle_name?: string;
     email: string;
 };
 
@@ -30,9 +30,9 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
     const { auth } = usePage<SharedData>().props;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
-        first_name: auth.user.first_name,
-        last_name: auth.user.last_name,
-        middle_name: auth.user.middle_name,
+        first_name: auth.params?.first_name ?? '',
+        last_name: auth.params?.last_name ?? '',
+        middle_name: auth.params?.middle_name ?? '',
         email: auth.user.email,
     });
 
@@ -51,16 +51,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
             <SettingsLayout>
                 <div className="space-y-6">
                     <HeadingSmall title="Информация профиля" description="Измените данные профиля" />
-                    <div className="mb-4">
-                        <UploadImageFile
-                            defaultImage={auth.user.avatar}
-                            route={route('profile.avatar.upload')}
-                            onSuccess={(newAvatarUrl) => {
-                                // обновить аватар в состоянии или refetch user
-                                console.log(newAvatarUrl);
-                            }}
-                        />
-                    </div>
+
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">
                             <Label htmlFor="last_name">Фамилия</Label>

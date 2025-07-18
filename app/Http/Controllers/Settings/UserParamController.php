@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\UserParam;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Laravel\Facades\Image;
 
 class UserParamController extends Controller
 {
@@ -23,26 +24,13 @@ class UserParamController extends Controller
     public function update(Request $request, UserParam $userParam)
     {
         $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'first_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
             'middle_name' => 'nullable|string|max:255',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'age' => 'nullable|integer|min:1|max:120',
             'gender' => 'nullable|integer|between:0,2',
             'phone' => 'nullable|string|max:20',
         ]);
-
-        // Handle avatar upload
-        if ($request->hasFile('avatar')) {
-            // Delete old avatar if exists
-            if ($userParam->avatar) {
-                Storage::delete('public/' . $userParam->avatar);
-            }
-
-            // Store new avatar
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $validated['avatar'] = $path;
-        }
 
         $userParam->update($validated);
 
@@ -52,42 +40,37 @@ class UserParamController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(UserParam $userParam)
-    {
-        // Delete avatar if exists
-        if ($userParam->avatar) {
-            Storage::delete('public/' . $userParam->avatar);
-        }
-
-        $userParam->delete();
-
-        return response()->json(['message' => 'User parameters deleted successfully']);
-    }
-
     public function uploadAvatar(Request $request)
     {
         $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         $user = $request->user();
+        $userParam = $user->params()->firstOrNew();
 
-        // Удаляем старый аватар
-        if ($user->avatar) {
-            Storage::disk('public')->delete($user->avatar);
+        // Delete old avatar if exists
+        if ($userParam->avatar) {
+            Storage::disk('public')->delete('avatars/'.$userParam->avatar);
         }
 
-        // Сохраняем новый
-        $path = $request->file('avatar')->store('avatars', 'public');
-        $user->avatar = $path;
-        $user->save();
+        // Обрабатываем изображение (новый синтаксис Intervention Image v3+)
+        $image = Image::read($request->file('image'))
+            ->cover(300, 300) // Аналог fit() в старых версиях
+            ->toJpeg(80);     // Кодируем в JPEG с качеством 80%
 
-        return response()->json([
-            'url' => Storage::url($path),
-            'path' => $path,
-        ]);
+        // Generate filename and path
+        $filename = 'user_' . $user->id . '.jpg';
+        $directory = 'avatars';
+        $path = $directory . '/' . $filename;
+
+        // Save the image using Storage
+        Storage::disk('public')->put($path, $image);
+
+        // Update user params
+        $userParam->avatar = $filename;
+        $userParam->save();
+
+        return to_route('profile.edit');
     }
 }

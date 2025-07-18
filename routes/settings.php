@@ -20,5 +20,5 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('settings/appearance');
     })->name('appearance');
 
-    Route::post('/profile/avatar', [UserParamController::class, 'uploadAvatar'])->name('profile.avatar.upload');
+    Route::post('settings/profile/avatar', [UserParamController::class, 'uploadAvatar'])->name('profile.params.avatar');
 });

@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, FormEvent, useState } from 'react';
 import { GetProp, Image, Upload, UploadFile, UploadProps, message } from 'antd';
 import { PlusIcon } from 'lucide-react';
 import { useForm } from '@inertiajs/react';
@@ -15,122 +15,118 @@ const getBase64 = (file: FileType): Promise<string> =>
 
 interface IUploadImageFile {
     route: string;
-    defaultImage?: string;
+    defaultImage?: { url: string, fileName: string };
     onSuccess?: (fileUrl: string) => void;
 }
 
 const UploadImageFile: FC<IUploadImageFile> = ({ route, defaultImage, onSuccess }) => {
     const [previewOpen, setPreviewOpen] = useState(false);
-    const [previewImage, setPreviewImage] = useState(defaultImage || '');
-    const [currentFile, setCurrentFile] = useState<UploadFile | null>(null);
-    const { data, setData, post, progress, reset } = useForm({
-        avatar: null as File | null,
+    const [previewImage, setPreviewImage] = useState('');
+    const [fileList, setFileList] = useState<UploadFile[] | []>(() => {
+        return defaultImage?.fileName ? [
+            {
+                uid: '1',
+                name: defaultImage?.fileName || 'image.jpg',
+                status: 'done',
+                url: defaultImage?.url,
+            }
+        ] : [];
+    });
+
+    const { setData, post, reset } = useForm({
+        image: null as File | null,
     });
 
     const handlePreview = async (file: UploadFile) => {
-        if (!file.url && !file.preview && file.originFileObj) {
-            file.preview = await getBase64(file.originFileObj);
+        if (!file.url && !file.preview) {
+            file.preview = await getBase64(file.originFileObj as FileType);
         }
+
         setPreviewImage(file.url || (file.preview as string));
         setPreviewOpen(true);
     };
 
-    const handleChange: UploadProps['onChange'] = ({ file }) => {
-        if (file.status === 'done') {
-            message.success('Аватар успешно загружен');
-            if (file.response?.url) {
-                setPreviewImage(file.response.url);
-                onSuccess?.(file.response.url);
-            }
-            setCurrentFile(file);
-        } else if (file.status === 'error') {
-            message.error('Ошибка при загрузке аватара');
+    const handleChange: UploadProps['onChange'] = ({ fileList }) => {
+        // Берем последний загруженный файл
+        const lastFile = fileList[0];
+        setFileList(fileList || null);
+        // Обновляем данные формы
+        if (lastFile?.originFileObj) {
+
+            setData('image', lastFile?.originFileObj);
+
+
+            post(route, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    message.success('Аватар успешно загружен');
+                    onSuccess?.(lastFile.response?.url);
+                },
+                onError: (errors) => {
+                    message.error('Ошибка при загрузке аватара');
+                    console.error(errors);
+                }
+            });
         }
     };
 
     const beforeUpload: UploadProps['beforeUpload'] = (file) => {
-        if (currentFile) {
-            message.error('Вы можете загрузить только один файл');
+        // Проверяем тип файла (разрешены только изображения)
+        const isImage = file.type.startsWith('image/');
+        if (!isImage) {
+            message.error('Можно загружать только изображения!');
+            return Upload.LIST_IGNORE; // Игнорируем файл
+        }
+
+        // Проверяем размер файла (например, не больше 5MB)
+        const isLt5M = file.size / 1024 / 1024 < 5;
+        if (!isLt5M) {
+            message.error('Изображение должно быть меньше 5MB!');
             return Upload.LIST_IGNORE;
         }
 
-        // Обновляем данные формы перед отправкой
-        reset();
-        setData('avatar', file);
+        setData('image', file);
 
         return false; // Отключаем автоматическую загрузку
     };
 
-    const handleSubmit = () => {
-        if (!data.avatar) {
-            message.error('Пожалуйста, выберите файл');
-            return;
-        }
-
-        post(route, {
-            forceFormData: true,
-            onSuccess: () => {
-                message.success('Аватар успешно обновлен');
-                reset();
-            },
-            onError: () => {
-                message.error('Ошибка при загрузке аватара');
-            },
-        });
-    };
+    const uploadButton = (
+        <button className="flex flex-col items-center" style={{ border: 0, background: 'none' }} type="button">
+            <PlusIcon />
+            <div style={{ marginTop: 8 }}>Upload</div>
+        </button>
+    );
 
     return (
-        <div className="space-y-4">
+        <div style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center'
+        }}>
             <Upload
-                customRequest={handleSubmit}
-                name="avatar"
                 listType="picture-circle"
-                fileList={currentFile ? [currentFile] : []}
+                fileList={fileList}
                 onPreview={handlePreview}
                 onChange={handleChange}
-                beforeUpload={beforeUpload}
                 maxCount={1}
-                accept="image/*"
-                showUploadList={false}
+                showUploadList={true}
+                beforeUpload={beforeUpload}
             >
-                {!currentFile ? (
-                    <button className="flex flex-col items-center" type="button">
-                        <PlusIcon />
-                        <div style={{ marginTop: 8 }}>Загрузить</div>
-                    </button>
-                ) : (
-                    <div className="w-full h-full rounded-full overflow-hidden">
-                        <Image
-                            wrapperStyle={{ display: 'none' }}
-                            preview={{
-                                visible: previewOpen,
-                                onVisibleChange: (visible) => setPreviewOpen(visible),
-                                afterOpenChange: (visible) => !visible && setPreviewImage(''),
-                            }}
-                            src={previewImage}
-                        />
-                    </div>
-                )}
+                {fileList.length >= 1 ? null : uploadButton}
             </Upload>
+            {previewImage && (
+                <Image
+                    width={200}
+                    wrapperStyle={{ display: 'none' }}
+                    preview={{
+                        visible: previewOpen,
+                        onVisibleChange: (visible) => setPreviewOpen(visible),
+                        afterOpenChange: (visible) => !visible && setPreviewImage(''),
+                    }}
+                    src={previewImage}
 
-            {/*{data.avatar && (*/}
-            {/*    <button*/}
-            {/*        onClick={handleSubmit}*/}
-            {/*        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"*/}
-            {/*        disabled={progress}*/}
-            {/*    >*/}
-            {/*        {progress ? 'Загрузка...' : 'Сохранить аватар'}*/}
-            {/*    </button>*/}
-            {/*)}*/}
-
-            {/*{progress && (*/}
-            {/*    <div className="w-full bg-gray-200 rounded-full h-2.5">*/}
-            {/*        <div*/}
-            {/*            className="bg-blue-600 h-2.5 rounded-full"*/}
-            {/*            style={{ width: `${progress.percentage}%` }}*/}
-            {/*        />*/}
-            {/*    </div>*/}
-            {/*)}*/}
+                />
+            )}
         </div>
     );
 };

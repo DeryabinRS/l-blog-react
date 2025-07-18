@@ -33,7 +33,7 @@ class UserParam extends Model
      */
     public function getAvatarUrlAttribute()
     {
-        return $this->avatar ? asset('storage/' . $this->avatar) : null;
+        return $this->avatar ? asset('storage/avatars/' . $this->avatar) : null;
     }
 
     /**
